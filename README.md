@@ -22,6 +22,7 @@ Here are the performance results:
 Device: Apple M1; 8GB Ram
 Node: v21.7.1
 
+<img width="536" alt="Screenshot 2024-04-06 at 10 47 26 AM" src="https://github.com/olajide1234/seso-test/assets/42445456/4108ee20-2e09-429e-a129-a525ed880489">
 
 
 
@@ -40,6 +41,7 @@ The space complexity is O(s * MAX_FETCH) due to the extra queue to fetch more lo
 Here are the performance results:
 Device: Apple M1; 8GB Ram
 Node: v21.7.1
+<img width="532" alt="Screenshot 2024-04-06 at 10 46 58 AM" src="https://github.com/olajide1234/seso-test/assets/42445456/3dbec6f9-c2f9-44af-8fb8-37f23cbdbce4">
 
 
 
