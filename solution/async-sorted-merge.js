@@ -2,7 +2,9 @@
 
 // Print all entries, across all of the *async* sources, in chronological order.
 const MinHeapModule = require('../solution/lib/minHeap');
+const QueueModule = require('../solution/lib/queue');
 const { MinHeap } = MinHeapModule;
+const { Queue } = QueueModule;
 
 // There is some balancing act here for async sources. Await resolving is a bottleneck. We do not want to fetch too much logs into memory at a time, the logs can be really huge - space complexity
 // However, we also do not want to be waiting too much for the promise to resolve before printing, we could potentially wait too long.
@@ -38,13 +40,13 @@ module.exports = async (logSources, printer) => {
       }
     });
 
-    const resultCache = logSources.map(_ => []);
+    const resultCache = logSources.map(_ => new Queue());
     await hydrateCache(); // Initial cache hydration.
 
     async function hydrateCache() { // This is a mimick. If I had more time, this will live in a separate process to avoid blocking the thread. For now, we manage the optimization of awaiting multiple promises at once. This has a tradeoff of cold start to initialize cache.
       try {
-        if (moreResultExists && resultCache.find(cache => cache.length < (MAX_FETCH/3))) { // Top up cache when depleted to less than third. This improves the performance by around 10%.
-          while (moreResultExists && resultCache.find(cache => cache.length < MAX_FETCH)) {
+        if (moreResultExists && resultCache.find(cache => cache.queueLength < (MAX_FETCH/3))) { // Top up cache when depleted to less than third. This improves the performance by around 10%.
+          while (moreResultExists && resultCache.find(cache => cache.queueLength < MAX_FETCH)) {
             const nextLogs = await Promise.all(logSources.map((source) => { // Using top level Promise.all so that all the promises resolve in parallel
                 return source.drained ? false : source.popAsync();
             }));
@@ -52,7 +54,7 @@ module.exports = async (logSources, printer) => {
               moreResultExists =  false
             }
             nextLogs.forEach((nextLog, i) => {
-              resultCache[i].push(nextLog)
+              resultCache[i].enqueue(nextLog)
             });
         }
         return
@@ -64,7 +66,7 @@ module.exports = async (logSources, printer) => {
   }
 
     async function getResultFromCache(index) {
-    const log = resultCache[index].shift(); // Not a true queue in JS, we could avoid shifting by moving cursor (or other crafty solutions), but those would leave a lot of printed logs in the memory. - space complexity. We will sacrifice with a shift, that is O(number of sources * MAX_FETCH) complexity
+    const log = resultCache[index].dequeue();
     await hydrateCache();
     return log
   }
